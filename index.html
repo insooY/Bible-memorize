@@ -132,7 +132,10 @@
       <h3 class="sec-title">등록된 구절</h3>
       <div id="verseList"></div>
     </div>
-    <button class="btn start-btn hidden" id="startBtn" onclick="startTest()">시험 시작 →</button>
+    <div class="hidden" id="startBtns" style="display:none;gap:10px;margin-top:24px">
+      <button class="btn start-btn" style="flex:1;margin:0" onclick="startTest(true)">🔀 랜덤 시험</button>
+      <button class="btn start-btn" style="flex:1;margin:0;background:#5a4e3c" onclick="startTest(false)">📋 순서대로 시험</button>
+    </div>
   </div>
 
   <!-- TEST PAGE -->
@@ -182,8 +185,9 @@
       <div class="result-meta" id="resMeta"></div>
     </div>
     <div id="resRows" style="margin-top:20px;text-align:left"></div>
-    <div class="bottom-btns">
-      <button class="btn retry-btn" onclick="startTest()">다시 시험</button>
+    <div class="bottom-btns" style="flex-wrap:wrap">
+      <button class="btn retry-btn" onclick="startTest(true)">🔀 랜덤 재시험</button>
+      <button class="btn retry-btn" style="background:#5a4e3c" onclick="startTest(false)">📋 순서대로 재시험</button>
       <button class="btn home-btn" onclick="goHome()">홈으로</button>
     </div>
   </div>
@@ -226,13 +230,13 @@ function updateCount() {
 
 function renderVerseList() {
   const el = document.getElementById("verseList");
-  const startBtn = document.getElementById("startBtn");
+  const startBtns = document.getElementById("startBtns");
   if (verses.length === 0) {
     el.innerHTML = '<p class="empty">등록된 구절이 없습니다.</p>';
-    startBtn.classList.add("hidden");
+    startBtns.style.display = "none";
     return;
   }
-  startBtn.classList.remove("hidden");
+  startBtns.style.display = "flex";
   el.innerHTML = verses.map((v, i) => `
     <div class="card v-card slide-in" style="animation-delay:${i*0.05}s" id="vc-${v.id}">
       <div style="flex:1;min-width:0" id="vd-${v.id}">
@@ -304,9 +308,10 @@ function goHome() {
 }
 
 // ── Test ──
-function startTest() {
+function startTest(shuffle) {
   if (verses.length === 0) return;
-  testQueue = [...verses].sort(() => Math.random() - 0.5);
+  testQueue = [...verses];
+  if (shuffle) testQueue.sort(() => Math.random() - 0.5);
   currentIdx = 0;
   results = [];
   showPage("test");
