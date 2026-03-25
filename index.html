@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>말씀 암송</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  ::selection { background: #d4a01740; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(170deg, #faf8f4 0%, #f0ece4 100%);
+    min-height: 100vh; color: #2c2418;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.05); } }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+  .fade-up { animation: fadeUp .4s ease both; }
+  .score-pulse { animation: pulse .6s ease; }
+  .slide-in { animation: slideIn .3s ease both; }
+  .card { background:#fff; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04); }
+  .btn { border:none; cursor:pointer; font-family:inherit; transition:all .15s ease; }
+  .btn:active { transform:scale(.97); }
+  .btn:disabled { opacity:.4; cursor:default; }
+  textarea:focus, input:focus { outline:none; border-color:#d4a017 !important; }
+
+  /* Header */
+  header { background:#fffdf8; border-bottom:1px solid #e8e2d6; position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); }
+  .header-inner { max-width:680px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:10px; }
+  .logo { font-size:22px; color:#d4a017; cursor:pointer; user-select:none; }
+  .h-title { font-family:'Noto Serif KR',serif; font-weight:700; font-size:18px; color:#2c2418; cursor:pointer; letter-spacing:-0.02em; }
+  .h-count { font-size:12px; color:#a09580; margin-left:auto; font-weight:500; }
+
+  /* Main */
+  main { max-width:680px; margin:0 auto; padding:24px 16px 60px; }
+  .page { max-width:640px; margin:0 auto; width:100%; }
+
+  /* Section title */
+  .sec-title { font-family:'Noto Serif KR',serif; font-size:15px; font-weight:600; color:#5a4e3c; margin-bottom:12px; letter-spacing:-0.01em; }
+
+  /* Inputs */
+  .inp { width:100%; padding:10px 14px; border:1.5px solid #e0d9cc; border-radius:10px; font-size:14px; font-family:inherit; background:#fdfcf9; margin-bottom:10px; color:#2c2418; transition:border .15s; }
+  .inp-ta { resize:vertical; min-height:70px; line-height:1.7; }
+
+  /* Add card */
+  .add-card { padding:20px; }
+  .add-btn { background:#2c2418; color:#faf8f4; padding:9px 20px; border-radius:10px; font-size:13px; font-weight:600; }
+
+  /* Verse card */
+  .v-card { padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-start; gap:12px; }
+  .v-ref { font-family:'Noto Serif KR',serif; font-weight:600; font-size:14px; color:#d4a017; margin-bottom:4px; }
+  .v-text { font-size:13px; line-height:1.7; color:#5a4e3c; word-break:keep-all; }
+  .v-actions { display:flex; gap:4px; flex-shrink:0; }
+  .icon-btn { background:none; font-size:16px; padding:4px 6px; color:#a09580; border-radius:6px; }
+  .icon-btn.del { color:#c0392b; }
+  .sm-btn { padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; background:#f4f1eb; color:#5a4e3c; }
+  .sm-btn.save { background:#2d8a4e; color:#fff; }
+
+  /* Start */
+  .start-btn { width:100%; margin-top:24px; padding:14px; background:#2c2418; color:#faf8f4; border-radius:14px; font-size:15px; font-weight:700; letter-spacing:-0.01em; }
+
+  /* Test page */
+  .test-hdr { display:flex; justify-content:space-between; margin-bottom:16px; align-items:center; }
+  .progress { font-size:13px; font-weight:600; color:#a09580; background:#fff; padding:5px 14px; border-radius:20px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  .timer { font-size:13px; font-weight:500; color:#a09580; font-variant-numeric:tabular-nums; }
+  .test-card { padding:24px; }
+  .test-ref { font-family:'Noto Serif KR',serif; font-weight:700; font-size:22px; color:#d4a017; text-align:center; margin-bottom:20px; letter-spacing:-0.02em; }
+  .hint-box { background:#faf7f0; border:1px dashed #e0d9cc; border-radius:10px; padding:10px 14px; margin-bottom:16px; display:flex; flex-direction:column; gap:4px; }
+  .hint-label { font-size:11px; font-weight:600; color:#c4a35a; text-transform:uppercase; letter-spacing:0.05em; }
+  .hint-text { font-size:13px; color:#a09580; line-height:1.6; word-break:keep-all; }
+  .test-inp { width:100%; padding:14px 16px; border:2px solid #e0d9cc; border-radius:12px; font-size:15px; font-family:inherit; line-height:1.8; background:#fffdf8; color:#2c2418; resize:vertical; }
+  .test-actions { display:flex; justify-content:space-between; align-items:center; margin-top:14px; }
+  .shortcut { font-size:11px; color:#b8ad9a; }
+  .submit-btn { background:#2c2418; color:#faf8f4; padding:10px 28px; border-radius:12px; font-size:14px; font-weight:700; }
+
+  /* Score badge */
+  .score-badge { display:flex; flex-direction:column; align-items:center; gap:2px; padding:18px; border-radius:16px; border:1.5px solid; margin-bottom:20px; }
+  .score-emoji { font-size:28px; }
+  .score-num { font-size:36px; font-weight:900; font-family:'Noto Serif KR',serif; letter-spacing:-0.03em; }
+  .score-label { font-size:12px; font-weight:500; opacity:.7; }
+
+  /* Diff */
+  .diff-box { margin-bottom:16px; }
+  .diff-label { font-size:11px; font-weight:600; color:#a09580; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; }
+  .diff-content { line-height:2; font-size:15px; word-break:keep-all; }
+  .dw { display:inline; margin-right:5px; }
+  .dw-ok { color:#2d8a4e; }
+  .dw-wrong { color:#c0392b; background:#c0392b10; padding:1px 4px; border-radius:4px; }
+  .dw-miss { color:#e67e22; background:#e67e2210; padding:1px 4px; border-radius:4px; }
+  .dw-extra { color:#999; background:#eee; padding:1px 4px; border-radius:4px; text-decoration:line-through; }
+  .orig-box { background:#faf7f0; border-radius:10px; padding:12px 16px; margin-bottom:20px; }
+  .orig-text { font-size:14px; line-height:1.8; color:#5a4e3c; font-family:'Noto Serif KR',serif; word-break:keep-all; }
+
+  /* Result page */
+  .result-card { padding:36px 24px; text-align:center; }
+  .big-score { font-size:56px; font-weight:900; font-family:'Noto Serif KR',serif; letter-spacing:-0.03em; margin-top:8px; }
+  .grade-label { font-family:'Noto Serif KR',serif; font-size:20px; font-weight:700; color:#2c2418; margin-top:4px; }
+  .result-meta { font-size:13px; color:#a09580; margin-top:8px; }
+  .result-row { padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+  .result-ref { font-family:'Noto Serif KR',serif; font-weight:600; font-size:14px; color:#5a4e3c; }
+  .result-score { font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .bottom-btns { display:flex; gap:12px; justify-content:center; margin-top:28px; }
+  .retry-btn { padding:12px 28px; background:#2c2418; color:#faf8f4; border-radius:12px; font-size:14px; font-weight:700; }
+  .home-btn { padding:12px 28px; background:#f4f1eb; color:#5a4e3c; border-radius:12px; font-size:14px; font-weight:700; }
+
+  .empty { font-size:13px; color:#b8ad9a; text-align:center; padding:24px; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <span class="logo" onclick="goHome()">✦</span>
+    <h1 class="h-title" onclick="goHome()">말씀 암송</h1>
+    <span class="h-count" id="verseCount">0개 구절</span>
+  </div>
+</header>
+
+<main>
+  <!-- HOME PAGE -->
+  <div id="homePage" class="page fade-up">
+    <div class="card add-card">
+      <h3 class="sec-title">구절 추가</h3>
+      <input class="inp" id="addRef" placeholder="구절 위치 (예: 로마서 8:28)">
+      <textarea class="inp inp-ta" id="addText" placeholder="구절 내용을 입력하세요"></textarea>
+      <button class="btn add-btn" onclick="addVerse()">+ 추가</button>
+    </div>
+    <div style="margin-top:20px">
+      <h3 class="sec-title">등록된 구절</h3>
+      <div id="verseList"></div>
+    </div>
+    <button class="btn start-btn hidden" id="startBtn" onclick="startTest()">시험 시작 →</button>
+  </div>
+
+  <!-- TEST PAGE -->
+  <div id="testPage" class="page fade-up hidden">
+    <div class="test-hdr">
+      <span class="progress" id="progressLabel"></span>
+      <span class="timer" id="timerLabel">0초</span>
+    </div>
+    <div class="card test-card">
+      <div class="test-ref" id="testRef"></div>
+      <div id="questionArea">
+        <div class="hint-box">
+          <span class="hint-label">힌트</span>
+          <span class="hint-text" id="hintText"></span>
+        </div>
+        <textarea class="test-inp" id="testInput" rows="5" placeholder="암송한 구절을 입력하세요..."></textarea>
+        <div class="test-actions">
+          <span class="shortcut">Ctrl+Enter로 제출</span>
+          <button class="btn submit-btn" id="submitBtn" onclick="submitAnswer()" disabled>제출</button>
+        </div>
+      </div>
+      <div id="answerArea" class="hidden">
+        <div class="score-badge score-pulse" id="scoreBadge">
+          <span class="score-emoji" id="scoreEmoji"></span>
+          <span class="score-num" id="scoreNum"></span>
+          <span class="score-label" id="scoreLabel"></span>
+        </div>
+        <div class="diff-box">
+          <div class="diff-label">비교 결과</div>
+          <div class="diff-content" id="diffContent"></div>
+        </div>
+        <div class="orig-box">
+          <div class="diff-label">원문</div>
+          <div class="orig-text" id="origText"></div>
+        </div>
+        <button class="btn submit-btn" id="nextBtn" onclick="nextVerse()" style="width:100%"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT PAGE -->
+  <div id="resultPage" class="page fade-up hidden" style="max-width:540px">
+    <div class="card result-card">
+      <div id="resEmoji" style="font-size:48px"></div>
+      <div class="big-score score-pulse" id="resBigScore"></div>
+      <div class="grade-label" id="resGrade"></div>
+      <div class="result-meta" id="resMeta"></div>
+    </div>
+    <div id="resRows" style="margin-top:20px;text-align:left"></div>
+    <div class="bottom-btns">
+      <button class="btn retry-btn" onclick="startTest()">다시 시험</button>
+      <button class="btn home-btn" onclick="goHome()">홈으로</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const SAMPLE = [
+  { id:"s1", ref:"요한복음 3:16", text:"하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 저를 믿는 자마다 멸망치 않고 영생을 얻게 하려 하심이니라" },
+  { id:"s2", ref:"빌립보서 4:13", text:"내게 능력 주시는 자 안에서 내가 모든 것을 할 수 있느니라" },
+  { id:"s3", ref:"잠언 3:5-6", text:"너는 마음을 다하여 여호와를 신뢰하고 네 명철을 의지하지 말라 너는 범사에 그를 인정하라 그리하면 네 길을 지도하시리라" },
+];
+
+let verses = [];
+let testQueue = [];
+let currentIdx = 0;
+let results = [];
+let startTime = 0;
+let timerInterval = null;
+
+// ── Storage ──
+function loadVerses() {
+  try {
+    const saved = localStorage.getItem("bible-verses");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) { verses = parsed; return; }
+    }
+  } catch {}
+  verses = [...SAMPLE];
+  saveVerses();
+}
+function saveVerses() {
+  try { localStorage.setItem("bible-verses", JSON.stringify(verses)); } catch {}
+}
+
+// ── Render ──
+function updateCount() {
+  document.getElementById("verseCount").textContent = verses.length + "개 구절";
+}
+
+function renderVerseList() {
+  const el = document.getElementById("verseList");
+  const startBtn = document.getElementById("startBtn");
+  if (verses.length === 0) {
+    el.innerHTML = '<p class="empty">등록된 구절이 없습니다.</p>';
+    startBtn.classList.add("hidden");
+    return;
+  }
+  startBtn.classList.remove("hidden");
+  el.innerHTML = verses.map((v, i) => `
+    <div class="card v-card slide-in" style="animation-delay:${i*0.05}s" id="vc-${v.id}">
+      <div style="flex:1;min-width:0" id="vd-${v.id}">
+        <div class="v-ref">${esc(v.ref)}</div>
+        <div class="v-text">${esc(v.text)}</div>
+      </div>
+      <div class="v-actions" id="va-${v.id}">
+        <button class="btn icon-btn" onclick="startEdit('${v.id}')" title="수정">✎</button>
+        <button class="btn icon-btn del" onclick="deleteVerse('${v.id}')" title="삭제">✕</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function esc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+// ── CRUD ──
+function addVerse() {
+  const ref = document.getElementById("addRef").value.trim();
+  const text = document.getElementById("addText").value.trim();
+  if (!ref || !text) return;
+  verses.push({ id: Date.now().toString(), ref, text });
+  saveVerses(); updateCount(); renderVerseList();
+  document.getElementById("addRef").value = "";
+  document.getElementById("addText").value = "";
+}
+
+function deleteVerse(id) {
+  verses = verses.filter(v => v.id !== id);
+  saveVerses(); updateCount(); renderVerseList();
+}
+
+function startEdit(id) {
+  const v = verses.find(x => x.id === id);
+  if (!v) return;
+  const card = document.getElementById("vc-" + id);
+  card.innerHTML = `
+    <div style="width:100%">
+      <input class="inp" id="er-${id}" value="${esc(v.ref)}">
+      <textarea class="inp inp-ta" id="et-${id}" style="margin-top:8px">${esc(v.text)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn sm-btn save" onclick="saveEdit('${id}')">저장</button>
+        <button class="btn sm-btn" onclick="renderVerseList()">취소</button>
+      </div>
+    </div>
+  `;
+}
+
+function saveEdit(id) {
+  const ref = document.getElementById("er-" + id).value.trim();
+  const text = document.getElementById("et-" + id).value.trim();
+  if (!ref || !text) return;
+  verses = verses.map(v => v.id === id ? { ...v, ref, text } : v);
+  saveVerses(); renderVerseList();
+}
+
+// ── Navigation ──
+function showPage(name) {
+  ["homePage","testPage","resultPage"].forEach(p => {
+    document.getElementById(p).classList.toggle("hidden", p !== name+"Page");
+  });
+}
+
+function goHome() {
+  clearInterval(timerInterval);
+  showPage("home");
+  renderVerseList();
+  updateCount();
+}
+
+// ── Test ──
+function startTest() {
+  if (verses.length === 0) return;
+  testQueue = [...verses].sort(() => Math.random() - 0.5);
+  currentIdx = 0;
+  results = [];
+  showPage("test");
+  loadQuestion();
+}
+
+function loadQuestion() {
+  const v = testQueue[currentIdx];
+  document.getElementById("progressLabel").textContent = `${currentIdx+1} / ${testQueue.length}`;
+  document.getElementById("testRef").textContent = v.ref;
+
+  // hint: first word full, rest first-char + ⋯
+  const words = v.text.split(/\s+/);
+  const hint = words.map((w,i) => i===0 ? w : w[0]+"⋯").join(" ");
+  document.getElementById("hintText").textContent = hint;
+
+  document.getElementById("questionArea").classList.remove("hidden");
+  document.getElementById("answerArea").classList.add("hidden");
+
+  const inp = document.getElementById("testInput");
+  inp.value = "";
+  inp.disabled = false;
+  document.getElementById("submitBtn").disabled = true;
+  inp.focus();
+
+  startTime = Date.now();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now()-startTime)/1000);
+    const m = Math.floor(s/60);
+    document.getElementById("timerLabel").textContent = m>0 ? `${m}분 ${s%60}초` : `${s}초`;
+  }, 200);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const inp = document.getElementById("testInput");
+  inp.addEventListener("input", () => {
+    document.getElementById("submitBtn").disabled = !inp.value.trim();
+  });
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submitAnswer();
+  });
+});
+
+function diffWords(original, typed) {
+  const origW = original.replace(/\s+/g," ").trim().split(" ");
+  const typedW = typed.replace(/\s+/g," ").trim().split(" ");
+  const res = [];
+  let correct = 0;
+  for (let i=0; i<origW.length; i++) {
+    if (i < typedW.length) {
+      const ok = origW[i] === typedW[i];
+      if (ok) correct++;
+      res.push({ word:origW[i], typed:typedW[i], status: ok?"correct":"wrong" });
+    } else {
+      res.push({ word:origW[i], typed:"", status:"missing" });
+    }
+  }
+  for (let i=origW.length; i<typedW.length; i++) {
+    res.push({ word:"", typed:typedW[i], status:"extra" });
+  }
+  const total = origW.length;
+  return { result:res, score: total>0 ? Math.round(correct/total*100) : 0, correct, total };
+}
+
+function getGrade(score) {
+  if (score===100) return { label:"완벽!", emoji:"👑", color:"#d4a017" };
+  if (score>=90) return { label:"훌륭해요!", emoji:"🌟", color:"#2d8a4e" };
+  if (score>=70) return { label:"잘했어요", emoji:"📖", color:"#3a7bd5" };
+  if (score>=50) return { label:"조금 더!", emoji:"💪", color:"#e67e22" };
+  return { label:"다시 도전", emoji:"🔄", color:"#c0392b" };
+}
+
+function submitAnswer() {
+  const inp = document.getElementById("testInput");
+  if (!inp.value.trim()) return;
+  clearInterval(timerInterval);
+  inp.disabled = true;
+
+  const v = testQueue[currentIdx];
+  const diff = diffWords(v.text, inp.value);
+  const grade = getGrade(diff.score);
+
+  results.push({ ref:v.ref, score:diff.score, correct:diff.correct, total:diff.total });
+
+  // Score badge
+  const badge = document.getElementById("scoreBadge");
+  badge.style.background = grade.color + "18";
+  badge.style.color = grade.color;
+  badge.style.borderColor = grade.color + "30";
+  document.getElementById("scoreEmoji").textContent = grade.emoji;
+  document.getElementById("scoreNum").textContent = diff.score + "%";
+  document.getElementById("scoreLabel").textContent = `${diff.correct}/${diff.total} 단어`;
+
+  // Diff
+  document.getElementById("diffContent").innerHTML = diff.result.map(w => {
+    const cls = w.status==="correct" ? "dw-ok" : w.status==="wrong" ? "dw-wrong" : w.status==="missing" ? "dw-miss" : "dw-extra";
+    let inner;
+    if (w.status === "wrong") {
+      inner = `<span style="text-decoration:line-through;opacity:.5">${esc(w.typed)}</span> → <b>${esc(w.word)}</b>`;
+    } else if (w.status === "missing") {
+      inner = `<b style="border-bottom:2px dashed">${esc(w.word)}</b>`;
+    } else if (w.status === "extra") {
+      inner = `<s>${esc(w.typed)}</s>`;
+    } else {
+      inner = esc(w.word);
+    }
+    return `<span class="dw ${cls}">${inner}</span>`;
+  }).join("");
+
+  document.getElementById("origText").textContent = v.text;
+
+  const nextB = document.getElementById("nextBtn");
+  nextB.textContent = currentIdx+1 < testQueue.length ? "다음 구절 →" : "결과 보기 →";
+
+  document.getElementById("questionArea").classList.add("hidden");
+  document.getElementById("answerArea").classList.remove("hidden");
+}
+
+function nextVerse() {
+  if (currentIdx+1 < testQueue.length) {
+    currentIdx++;
+    loadQuestion();
+  } else {
+    showResult();
+  }
+}
+
+// ── Result ──
+function showResult() {
+  showPage("result");
+  const avg = results.length>0 ? Math.round(results.reduce((a,r)=>a+r.score,0)/results.length) : 0;
+  const grade = getGrade(avg);
+
+  document.getElementById("resEmoji").textContent = grade.emoji;
+  const bigS = document.getElementById("resBigScore");
+  bigS.textContent = avg + "%";
+  bigS.style.color = grade.color;
+  document.getElementById("resGrade").textContent = grade.label;
+  document.getElementById("resMeta").textContent = `${results.length}개 구절 · 평균 정확도`;
+
+  document.getElementById("resRows").innerHTML = results.map((r,i) => {
+    const g = getGrade(r.score);
+    return `<div class="card result-row slide-in" style="animation-delay:${i*0.06}s">
+      <span class="result-ref">${esc(r.ref)}</span>
+      <span class="result-score" style="color:${g.color}">${r.score}%</span>
+    </div>`;
+  }).join("");
+}
+
+// ── Init ──
+loadVerses();
+updateCount();
+renderVerseList();
+</script>
+</body>
+</html>
