@@ -50,6 +50,10 @@
 
   /* Verse card */
   .v-card { padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-start; gap:12px; }
+  .v-check { width:18px; height:18px; accent-color:#d4a017; cursor:pointer; flex-shrink:0; margin-top:2px; }
+  .sel-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .sel-info { font-size:12px; color:#a09580; font-weight:500; }
+  .sel-toggle { background:none; font-size:12px; color:#d4a017; font-weight:600; padding:4px 8px; border-radius:6px; }
   .v-ref { font-family:'Noto Serif KR',serif; font-weight:600; font-size:14px; color:#d4a017; margin-bottom:4px; }
   .v-text { font-size:13px; line-height:1.7; color:#5a4e3c; word-break:keep-all; }
   .v-actions { display:flex; gap:4px; flex-shrink:0; }
@@ -129,7 +133,13 @@
       <button class="btn add-btn" onclick="addVerse()">+ 추가</button>
     </div>
     <div style="margin-top:20px">
-      <h3 class="sec-title">등록된 구절</h3>
+      <div class="sel-bar">
+        <h3 class="sec-title" style="margin-bottom:0">등록된 구절</h3>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="sel-info" id="selInfo"></span>
+          <button class="btn sel-toggle" id="selToggle" onclick="toggleSelectAll()">전체 선택</button>
+        </div>
+      </div>
       <div id="verseList"></div>
     </div>
     <div id="startBtns" style="display:none;gap:10px;margin-top:24px">
@@ -234,11 +244,15 @@ function renderVerseList() {
   if (verses.length === 0) {
     el.innerHTML = '<p class="empty">등록된 구절이 없습니다.</p>';
     startBtns.style.display = "none";
+    document.getElementById("selInfo").textContent = "";
+    document.getElementById("selToggle").style.display = "none";
     return;
   }
+  document.getElementById("selToggle").style.display = "";
   startBtns.style.display = "flex";
   el.innerHTML = verses.map((v, i) => `
     <div class="card v-card slide-in" style="animation-delay:${i*0.05}s" id="vc-${v.id}">
+      <input type="checkbox" class="v-check" data-id="${v.id}" checked onchange="updateSelCount()">
       <div style="flex:1;min-width:0" id="vd-${v.id}">
         <div class="v-ref">${esc(v.ref)}</div>
         <div class="v-text">${esc(v.text)}</div>
@@ -249,6 +263,28 @@ function renderVerseList() {
       </div>
     </div>
   `).join("");
+  updateSelCount();
+}
+
+function getSelectedIds() {
+  return [...document.querySelectorAll('.v-check:checked')].map(cb => cb.dataset.id);
+}
+
+function updateSelCount() {
+  const checked = document.querySelectorAll('.v-check:checked').length;
+  const total = verses.length;
+  document.getElementById("selInfo").textContent = `${checked}/${total} 선택`;
+  const toggle = document.getElementById("selToggle");
+  toggle.textContent = checked === total ? "전체 해제" : "전체 선택";
+  // disable start buttons if none selected
+  document.querySelectorAll('#startBtns .btn').forEach(b => b.disabled = checked === 0);
+}
+
+function toggleSelectAll() {
+  const boxes = document.querySelectorAll('.v-check');
+  const allChecked = [...boxes].every(cb => cb.checked);
+  boxes.forEach(cb => cb.checked = !allChecked);
+  updateSelCount();
 }
 
 function esc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
@@ -309,8 +345,9 @@ function goHome() {
 
 // ── Test ──
 function startTest(shuffle) {
-  if (verses.length === 0) return;
-  testQueue = [...verses];
+  const selectedIds = getSelectedIds();
+  if (selectedIds.length === 0) return;
+  testQueue = verses.filter(v => selectedIds.includes(v.id));
   if (shuffle) testQueue.sort(() => Math.random() - 0.5);
   currentIdx = 0;
   results = [];
